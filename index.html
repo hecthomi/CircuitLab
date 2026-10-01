@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<title>CircuitLab — Laboratorio virtual de circuitos y robótica</title>
+<meta name="description" content="Laboratorio virtual offline para aprender protoboard, electrónica, Arduino y micro:bit.">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="css/style.css?v=1.19.1">
+<link rel="stylesheet" href="css/components.css?v=1.19.1">
+<link rel="stylesheet" href="css/education.css?v=1.19.1">
+</head>
+<body data-modo="libre">
+
+<!-- ====================== BARRA SUPERIOR ====================== -->
+<header id="topbar">
+  <div class="tb-brand">
+    <img class="tb-logo" src="icons/logo.png" alt="CircuitLab" width="34" height="34">
+    <div class="tb-title">
+      <strong>CircuitLab</strong>
+      <span>Laboratorio de circuitos y robótica</span>
+    </div>
+  </div>
+
+  <div class="tb-proj">
+    <input id="projName" type="text" value="Proyecto sin título" spellcheck="false" title="Nombre del proyecto">
+    <span id="projState" class="proj-state">guardado</span>
+  </div>
+
+  <div class="tb-group" role="group" aria-label="Archivo">
+    <button class="tb-btn" id="btnArchivoDrop" title="Nuevo, abrir y guardar el proyecto" aria-haspopup="true" aria-expanded="false">
+      <span>📁</span><i>Archivo</i><i class="dd-caret">▾</i>
+    </button>
+  </div>
+
+  <div class="tb-group" role="group" aria-label="Edición">
+    <button class="tb-btn ico" id="btnUndo" title="Deshacer (Ctrl+Z)"><span>↶</span></button>
+    <button class="tb-btn ico" id="btnRedo" title="Rehacer (Ctrl+Y)"><span>↷</span></button>
+  </div>
+
+  <div class="tb-group" role="group" aria-label="Simulación">
+    <button class="tb-btn" id="btnAnalizar" title="Analizar circuito (F8)"><span>🔍</span><i>Analizar</i></button>
+  </div>
+
+  <div class="tb-group" role="group" aria-label="Aprender">
+    <button class="tb-btn" id="btnMasDrop" title="Modo, curso, ejemplos, ejercicios, retos, profesor y ayuda" aria-haspopup="true" aria-expanded="false">
+      <span>🎓</span><i>Aprender</i><i class="dd-caret">▾</i>
+    </button>
+  </div>
+
+  <div class="tb-spacer"></div>
+  <div class="tb-group end">
+    <!-- Selector de vista: el área donde se arma el circuito o la lista de
+         componentes que ese circuito está usando (ver #viewComponentes). -->
+    <div class="view-switch" id="viewSwitch" role="tablist" aria-label="Vista">
+      <button class="vs-btn active" id="vsCircuito" data-view="circuito" role="tab" aria-selected="true"
+              title="Área de trabajo donde se arma el circuito">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7.5" y="2.8" width="9" height="18.4" rx="2.2"/><path d="M10.4 7h.01M13.6 7h.01M10.4 12h.01M13.6 12h.01M10.4 17h.01M13.6 17h.01"/><path d="M4.5 7h3M4.5 12h3M4.5 17h3M16.5 7h3M16.5 12h3M16.5 17h3"/></svg>
+        <span>Circuito</span>
+      </button>
+      <button class="vs-btn" id="vsComponentes" data-view="componentes" role="tab" aria-selected="false"
+              title="Lista de los componentes usados en el circuito">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.2"/><path d="M3 9.5h18M9 9.5v10"/></svg>
+        <span>Componentes</span>
+      </button>
+    </div>
+    <button class="tb-btn cuenta" id="btnCuenta" title="Entrar con tu documento"><span>&#128273;</span><i>Entrar</i></button>
+    <button class="tb-btn ico" id="btnSonido" title="Activar o silenciar el sonido"><span>🔊</span></button>
+    <button class="tb-btn ico" id="btnTema" title="Cambiar tema claro / oscuro"><span>🌙</span></button>
+    <button class="tb-btn ico" id="btnMenu" title="Menú"><span>☰</span></button>
+  </div>
+</header>
+
+<!-- ============ BARRA DE HERRAMIENTAS (pegada a la cabecera) ============
+     Antes era el panel flotante #stageTools sobre la esquina del lienzo, más
+     la barrita que salía encima de lo seleccionado. Ahora todo vive aquí, en
+     una sola fila, y las acciones de la selección se apagan cuando no hay
+     nada elegido (js/editor/selection.js). -->
+<div id="toolbar2" role="toolbar" aria-label="Herramientas del área de trabajo">
+  <div class="t2-group" role="group" aria-label="Zoom">
+    <button class="st-btn" id="zoomIn" title="Acercar (+)">＋</button>
+    <button class="st-btn" id="zoomOut" title="Alejar (−)">−</button>
+    <button class="st-btn" id="zoomFit" title="Ajustar a la pantalla (0)">⤢</button>
+  </div>
+
+  <div class="t2-group" role="group" aria-label="Selección">
+    <button class="st-btn tgl" id="tglSeleccion" title="Herramienta seleccionar: arrastra para elegir varios componentes (por defecto el ratón mueve la pantalla)">⬚</button>
+    <button class="st-btn" id="btnRotar" data-act="rotate" title="Rotar lo seleccionado (R)" disabled>⟳</button>
+    <button class="st-btn" id="btnVoltearH" data-act="flipH" title="Voltear horizontalmente (H)" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18" stroke-dasharray="2.4 2.2"/><path d="M9 6L3 18h6z"/><path d="M15 6l6 12h-6z" fill="currentColor" fill-opacity=".35"/></svg></button>
+    <button class="st-btn" id="btnVoltearV" data-act="flipV" title="Voltear verticalmente (V)" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M3 12h18" stroke-dasharray="2.4 2.2"/><path d="M6 9L18 3v6z"/><path d="M6 15l12 6v-6z" fill="currentColor" fill-opacity=".35"/></svg></button>
+    <button class="st-btn" id="btnDuplicar" data-act="dup" title="Duplicar lo seleccionado (Ctrl+D)" disabled>⧉</button>
+    <button class="st-btn" id="btnColorCable" data-act="color" title="Color del cable seleccionado" disabled>🎨</button>
+    <button class="st-btn danger" id="btnEliminar" data-act="del" title="Eliminar lo seleccionado (Supr)" disabled>🗑️</button>
+  </div>
+
+  <div class="t2-group" role="group" aria-label="Ver">
+    <button class="st-btn tgl on" id="tglCuadricula" title="Mostrar la cuadrícula del fondo">▦</button>
+    <button class="st-btn tgl" id="tglConex" title="Mostrar conexiones internas de la protoboard">🔗</button>
+    <button class="st-btn tgl on" id="tglPines" title="Mostrar pines y polaridad">⚬</button>
+    <button class="st-btn tgl on" id="tglValores" title="Mostrar valores de los componentes">🏷️</button>
+    <button class="st-btn tgl" id="tglCorriente" title="Mostrar flujo de corriente">⚡</button>
+  </div>
+
+  <div class="t2-group" role="group" aria-label="Medir">
+    <button class="st-btn tgl" id="tglMulti" title="Multímetro: arrastra las puntas para medir tensión, corriente y resistencia">🔎</button>
+    <button class="st-btn" id="btnScope" title="Osciloscopio: ver cómo cambia una señal con el tiempo">📈</button>
+  </div>
+
+  <!-- Acciones principales: antes vivían en la cabecera, junto al nombre del
+       proyecto. Ahora acompañan a las herramientas del lienzo, pegadas al
+       borde derecho de esta misma fila. Cambian con la vista: en «Circuito»
+       son Código e Iniciar simulación; en «Componentes», PDF y CSV. -->
+  <div class="t2-group end" role="group" aria-label="Acciones">
+    <button class="tb-btn destacado solo-lista" id="btnListaPDF" title="Informe imprimible de la lista (guárdalo como PDF)"><span>📄</span><i>PDF</i></button>
+    <button class="tb-btn destacado solo-lista" id="btnListaCSV" title="Descargar la lista en CSV para Excel o LibreOffice"><span>⬇</span><i>Descargar CSV</i></button>
+    <button class="tb-btn destacado solo-circuito" id="btnCodigo" title="Editor de código">
+      <span class="ico-svg"><svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1.4" y="1.4" width="21.2" height="21.2" rx="5.6" fill="#dbe6f4" stroke="#bccbdf" stroke-width="1"/>
+        <path d="M9.3 8.4 6.1 12l3.2 3.6M14.7 8.4 17.9 12l-3.2 3.6M13.1 7.1l-2.2 9.8"
+              fill="none" stroke="#1d2b45" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></span><i>Código</i>
+    </button>
+    <button class="tb-btn run destacado solo-circuito" id="btnRun" title="Iniciar / detener la simulación (F5)"><span>▶</span><i>Iniciar simulación</i></button>
+  </div>
+</div>
+
+<!-- ====================== CUERPO ====================== -->
+<main id="layout">
+
+  <!-- ---------- PANEL IZQUIERDO: COMPONENTES ---------- -->
+  <aside id="panelLeft" class="panel">
+    <div class="panel-head">
+      <h2>Componentes</h2>
+      <div class="ph-acc">
+        <button class="collapse-btn" id="btnPersoPaleta" title="Personalizar el aspecto de cualquier componente">🎨</button>
+        <button class="collapse-btn" id="collapseLeft" title="Ocultar los componentes">›</button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input id="paletteSearch" type="search" placeholder="Buscar componente…" spellcheck="false">
+    </div>
+    <div id="palette" class="palette"><!-- generado por js/ui/panels.js --></div>
+    <div class="panel-foot">
+      <small>Arrastra un componente al área de trabajo o haz doble clic sobre él.</small>
+    </div>
+  </aside>
+
+  <!-- ---------- ÁREA CENTRAL ---------- -->
+  <section id="workspace">
+    <div id="stageWrap">
+      <svg id="stage" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="gridPat" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M20 0H0V20" fill="none" stroke="var(--grid)" stroke-width="1"/>
+          </pattern>
+          <filter id="glowSoft" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="selGlow" x="-70%" y="-70%" width="240%" height="240%">
+            <feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#38bdf8" flood-opacity=".95"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="3.6" flood-color="#38bdf8" flood-opacity=".55"/>
+          </filter>
+          <filter id="hovGlow" x="-70%" y="-70%" width="240%" height="240%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#38bdf8" flood-opacity=".45"/>
+          </filter>
+          <filter id="glowStrong" x="-150%" y="-150%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="9" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="dropShadow" x="-30%" y="-30%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".35"/>
+          </filter>
+        </defs>
+        <g id="viewport">
+          <rect id="gridRect" x="-6000" y="-6000" width="12000" height="12000" fill="url(#gridPat)"/>
+          <g id="layNets"></g>
+          <g id="layComps"></g>
+          <g id="layWires"></g>
+          <g id="layPins"></g>
+          <g id="layOverlay"></g>
+        </g>
+      </svg>
+
+      <!-- Pestañas para volver a abrir un panel plegado -->
+      <button class="panel-tab izq" id="verInspector" hidden title="Mostrar el inspector">›<b>Inspector</b></button>
+      <button class="panel-tab der" id="verComponentes" hidden title="Mostrar los componentes">‹<b>Componentes</b></button>
+
+
+      <!-- Lectura del multímetro -->
+      <div id="multiOut" hidden></div>
+
+      <!-- Panel del modo avería -->
+      <div id="faultHud" hidden></div>
+
+    </div>
+
+    <!-- Consola / mensajes educativos -->
+    <div id="consoleWrap">
+      <div class="cw-head">
+        <div class="cw-tabs">
+          <button class="cw-tab active" data-tab="mensajes">Mensajes</button>
+          <button class="cw-tab" data-tab="serial">Monitor Serie</button>
+          <button class="cw-tab" data-tab="informe">Informe</button>
+          <button class="cw-tab" data-tab="osciloscopio">Osciloscopio</button>
+        </div>
+        <div class="cw-actions">
+          <button class="mini" id="btnLimpiarConsola" title="Limpiar">Limpiar</button>
+          <button class="mini" id="btnConsolaToggle" title="Mostrar/ocultar">▾</button>
+        </div>
+      </div>
+      <div class="cw-body">
+        <div class="cw-pane active" id="paneMensajes"></div>
+        <div class="cw-pane" id="paneSerial"><pre id="serialOut"></pre></div>
+        <div class="cw-pane" id="paneInforme"></div>
+        <div class="cw-pane sin-margen" id="paneOsciloscopio">
+          <div id="scopeBar" class="scope-bar"></div>
+          <div id="scopeWrap" class="scope-wrap"><canvas id="scopeCanvas"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA "COMPONENTES" ----------
+       Ocupa el mismo sitio que el área de trabajo (se alternan con el
+       selector de la cabecera). Lista lo que el circuito está usando de
+       verdad: número, foto, nombre y modelo de cada pieza. -->
+  <section id="viewComponentes" hidden>
+    <div class="vc-head">
+      <div>
+        <h2>Componentes del circuito</h2>
+        <small id="vcResumen">—</small>
+      </div>
+      <div class="vc-acc">
+        <button class="btn small" id="vcPersonalizar" title="Cambiar el aspecto de cualquier componente del catálogo">🎨 Personalizar</button>
+        <button class="btn small" id="vcActualizar" title="Volver a leer el circuito">Actualizar</button>
+      </div>
+    </div>
+    <div class="vc-body" id="vcBody"></div>
+  </section>
+
+  <!-- ---------- PANEL DERECHO ---------- -->
+  <aside id="panelRight" class="panel">
+    <div class="panel-head">
+      <h2 id="prTitle">Inspector</h2>
+      <button class="collapse-btn" id="collapseRight" title="Ocultar el inspector">‹</button>
+    </div>
+    <div class="pr-tabs">
+      <button class="pr-tab active" data-pane="insp">Componente</button>
+      <button class="pr-tab" data-pane="sim">Simulación</button>
+      <button class="pr-tab" data-pane="asis">Asistente</button>
+    </div>
+    <div class="pr-body">
+      <div class="pr-pane active" id="paneInsp">
+        <div class="empty-note">Selecciona un componente para ver su información, sus propiedades y cómo se usa.</div>
+      </div>
+      <div class="pr-pane" id="paneSim"></div>
+      <div class="pr-pane" id="paneAsis"></div>
+    </div>
+  </aside>
+</main>
+
+<!-- ====================== EDITOR DE CÓDIGO ====================== -->
+<section id="codePanel" hidden>
+  <div class="cp-head">
+    <div class="cp-title">
+      <strong id="cpBoard">Arduino Uno</strong>
+      <span class="cp-sub" id="cpSub">Editor de código</span>
+    </div>
+    <div class="cp-modes">
+      <button class="cp-mode active" data-cmode="texto">Código</button>
+      <button class="cp-mode" data-cmode="bloques">Bloques</button>
+      <button class="cp-mode" data-cmode="ejemplos">Plantillas</button>
+    </div>
+    <div class="cp-actions">
+      <button class="btn small" id="btnCodeCheck">Verificar</button>
+      <button class="btn small ghost" id="btnCodeClose">✕</button>
+    </div>
+  </div>
+  <div class="cp-body">
+    <div class="cp-view active" id="cvTexto">
+      <div class="editor-shell">
+        <div class="gutter" id="codeGutter">1</div>
+        <!-- dos capas: el <pre> pinta el codigo con color y el <textarea>,
+             con el texto transparente, es el que se escribe de verdad -->
+        <div class="code-stack">
+          <pre class="code-hl" id="codeHL" aria-hidden="true"></pre>
+          <textarea id="codeArea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" wrap="off"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="cp-view" id="cvBloques">
+      <div class="blocks-wrap">
+        <div class="blocks-lib" id="blocksLib"></div>
+        <div class="blocks-prog">
+          <div class="bp-head">Mi programa <button class="mini" id="btnBloquesVaciar">Vaciar</button></div>
+          <div id="blocksProg" class="bp-list"></div>
+          <div class="bp-out"><small>Código generado</small><pre id="blocksCode"></pre></div>
+        </div>
+      </div>
+    </div>
+    <div class="cp-view" id="cvEjemplos"><div id="codeTemplates" class="tpl-grid"></div></div>
+  </div>
+</section>
+
+<!-- ====================== CAPAS FLOTANTES ====================== -->
+<div id="drawer" class="drawer" hidden>
+  <div class="dr-head">
+    <h2 id="drawerTitle">Curso</h2>
+    <button class="btn ghost" id="drawerClose">✕</button>
+  </div>
+  <div class="dr-body" id="drawerBody"></div>
+</div>
+
+<!-- Desplegable "Aprender" de la barra superior: fuera de #topbar para que no
+     lo recorte su overflow-y:hidden (se posiciona por JS con position:fixed). -->
+<div class="tb-dropdown-menu" id="ddArchivoMenu" hidden>
+  <button class="dd-item" id="btnNuevo" title="Nuevo proyecto (Ctrl+N)"><span>📄</span><i>Nuevo</i></button>
+  <button class="dd-item" id="btnAbrir" title="Repositorio de Actividades (Ctrl+O)"><span>📂</span><i>Abrir</i></button>
+  <div class="dd-sep"></div>
+  <button class="dd-item" id="btnGuardar" title="Guardar (Ctrl+S)"><span>💾</span><i>Guardar</i></button>
+  <button class="dd-item" id="btnGuardarComo" title="Guardar con otro nombre"><span>💿</span><i>Guardar como…</i></button>
+</div>
+
+<div class="tb-dropdown-menu" id="ddMasMenu" hidden>
+  <button class="dd-item mode" id="btnModo" title="Alternar modo aprendizaje / libre"><span>🎓</span><i>Modo libre</i></button>
+  <div class="dd-sep"></div>
+  <button class="dd-item" id="btnLecciones" title="Curso interactivo"><span>📚</span><i>Curso</i></button>
+  <button class="dd-item" id="btnEjemplos" title="Circuitos de ejemplo"><span>🧪</span><i>Ejemplos</i></button>
+  <button class="dd-item" id="btnEjercicios" title="Ejercicios"><span>🎯</span><i>Ejercicios</i></button>
+  <button class="dd-item" id="btnRetos" title="Modo desafío"><span>⏱️</span><i>Retos</i></button>
+  <button class="dd-item" id="btnAula" title="Trabajos que los estudiantes guardaron en su cuenta" hidden><span>&#127979;</span><i>Aula</i></button>
+  <button class="dd-item" id="btnProfesor" title="Modo profesor"><span>👨‍🏫</span><i>Profesor</i></button>
+  <div class="dd-sep"></div>
+  <button class="dd-item" id="btnAyuda" title="Ayuda y atajos (F1)"><span>❔</span><i>Ayuda</i></button>
+</div>
+
+<div id="modalRoot" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="tooltip" role="tooltip" hidden></div>
+
+<!-- Cronómetro de retos -->
+<div id="challengeHud" hidden>
+  <div class="ch-time"><span id="chTime">03:00</span></div>
+  <div class="ch-info">
+    <strong id="chTitle">Reto</strong>
+    <small id="chDesc"></small>
+  </div>
+  <div class="ch-stats">
+    <span title="Componentes usados">🧩 <b id="chComp">0</b></span>
+    <span title="Errores detectados">⚠️ <b id="chErr">0</b></span>
+    <span title="Intentos">🔁 <b id="chTry">0</b></span>
+  </div>
+  <button class="btn small primary" id="chCheck">Comprobar</button>
+  <button class="btn small ghost" id="chQuit">Salir</button>
+</div>
+
+<input type="file" id="fileImport" accept=".json,.circuitlab,application/json" hidden>
+
+<!-- ====================== SCRIPTS ====================== -->
+<script src="js/core/util.js?v=1.19.1"></script>
+<script src="js/core/audio.js?v=1.19.1"></script>
+<script src="js/core/state.js?v=1.19.1"></script>
+<script src="js/components/img_placas.js?v=1.19.1"></script>
+<script src="js/components/catalog.js?v=1.19.1"></script>
+<script src="js/components/catalog2.js?v=1.19.1"></script>
+<script src="js/components/breadboard.js?v=1.19.1"></script>
+<script src="js/components/arduino.js?v=1.19.1"></script>
+<script src="js/components/microbit.js?v=1.19.1"></script>
+<script src="js/components/personalizar.js?v=1.19.1"></script>
+<script src="js/simulation/electricity.js?v=1.19.1"></script>
+<script src="js/simulation/circuit-engine.js?v=1.19.1"></script>
+<script src="js/simulation/validation.js?v=1.19.1"></script>
+<script src="js/simulation/interpreter.js?v=1.19.1"></script>
+<script src="js/simulation/runtime.js?v=1.19.1"></script>
+<script src="js/editor/zoom.js?v=1.19.1"></script>
+<script src="js/editor/selection.js?v=1.19.1"></script>
+<script src="js/editor/wires.js?v=1.19.1"></script>
+<script src="js/editor/workspace.js?v=1.19.1"></script>
+<script src="js/editor/codeeditor.js?v=1.19.1"></script>
+<script src="js/editor/blocks.js?v=1.19.1"></script>
+<script src="js/storage/projects.js?v=1.19.1"></script>
+<script src="js/storage/cuenta.js?v=1.19.1"></script>
+<script src="js/ui/notifications.js?v=1.19.1"></script>
+<script src="js/ui/dialogs.js?v=1.19.1"></script>
+<script src="js/ui/panels.js?v=1.19.1"></script>
+<script src="js/ui/assistant.js?v=1.19.1"></script>
+<script src="js/ui/scope.js?v=1.19.1"></script>
+<script src="js/ui/multimetro.js?v=1.19.1"></script>
+<script src="js/ui/sonar.js?v=1.19.1"></script>
+<script src="js/education/examples.js?v=1.19.1"></script>
+<script src="js/education/lessons.js?v=1.19.1"></script>
+<script src="js/education/exercises.js?v=1.19.1"></script>
+<script src="js/education/challenges.js?v=1.19.1"></script>
+<script src="js/education/faults.js?v=1.19.1"></script>
+<script src="js/ui/teacher.js?v=1.19.1"></script>
+<script src="js/app.js?v=1.19.1"></script>
+</body>
+</html>

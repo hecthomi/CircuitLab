@@ -1,0 +1,24 @@
+# ══ CircuitLab — caché ══
+#
+# El HTML se revalida SIEMPRE (respuesta 304, unos pocos bytes) porque es quien
+# lleva el número de versión de los scripts: si el navegador se queda con un
+# index.html viejo pide los .js viejos y la app se congela en una versión
+# antigua aunque el servidor ya tenga la nueva (pasó con el arreglo del
+# arrastre de componentes sobre la protoboard).
+#
+# Los .js y .css sí se cachean un día: sus URLs llevan ?v=x.y.z, así que al
+# publicar una versión nueva cambia la URL y el navegador los vuelve a pedir
+# solo. Para desplegar un cambio basta con subir el número de ?v= en index.html
+# (y el nombre de la caché en service-worker.js).
+<IfModule mod_headers.c>
+	<FilesMatch "\.(html|webmanifest|json)$">
+		Header set Cache-Control "no-cache, must-revalidate"
+	</FilesMatch>
+	<FilesMatch "\.(css|js)$">
+		Header set Cache-Control "public, max-age=86400"
+	</FilesMatch>
+	# después del bloque anterior a propósito: este Header lo sobrescribe
+	<FilesMatch "service-worker\.js$">
+		Header set Cache-Control "no-cache, must-revalidate"
+	</FilesMatch>
+</IfModule>

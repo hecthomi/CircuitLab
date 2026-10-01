@@ -1,0 +1,191 @@
+/* ============================================================
+   CircuitLab — apariencia de los componentes dentro del lienzo
+   ============================================================ */
+
+/* --------- Componente genérico --------- */
+.comp{cursor:move}
+.comp .body{transition:filter .12s}
+/* Lo seleccionado no lleva recuadro: se le enciende un halo azul siguiendo
+   su propia silueta (filtros selGlow / hovGlow definidos en index.html). */
+.comp .cuerpo{transition:filter .12s}
+.comp.hovered .cuerpo{filter:url(#hovGlow)}
+.comp.sel .cuerpo,.comp.sel.hovered .cuerpo{filter:url(#selGlow)}
+.comp .label{font-family:var(--font);font-size:9px;fill:var(--text-dim);pointer-events:none;user-select:none}
+.comp .value{font-family:var(--mono);font-size:9px;fill:var(--acc);pointer-events:none;user-select:none}
+body.hide-values .comp .value,body.hide-values .comp .label{display:none}
+.comp.dragging{opacity:.85}
+
+/* --------- Pines --------- */
+.pin{cursor:crosshair}
+.pin .pin-hit{fill:transparent;stroke:transparent;stroke-width:9}
+.pin .pin-dot{fill:#8fa3c4;stroke:#0b1220;stroke-width:.6;transition:.12s}
+.pin.pos .pin-dot{fill:#f87171}
+.pin.neg .pin-dot{fill:#94a3b8}
+.pin:hover .pin-dot{fill:var(--acc);r:3.4}
+.pin.connected .pin-dot{fill:#34d399}
+.pin.target .pin-dot{fill:var(--warn);r:4}
+.pin-label{font-family:var(--mono);font-size:7px;fill:var(--text-mute);pointer-events:none;user-select:none}
+body.hide-pins .pin .pin-dot{opacity:0}
+body.hide-pins .pin-label{display:none}
+.polarity{font-family:var(--font);font-size:8.5px;font-weight:700;pointer-events:none;user-select:none}
+.polarity.p{fill:#f87171}
+.polarity.n{fill:#94a3b8}
+body.hide-pins .polarity{display:none}
+/* Pata INSERTADA en un agujero de la protoboard (clase puesta por workspace.js):
+   nada de puntos de colores, solo el extremo metálico de la pata dentro del
+   agujero, como en Tinkercad. Al pasar el ratón o apuntar un cable reaparece. */
+.pin.en-hoyo .pin-dot{fill:#9aa1a9;stroke:#6b7280;stroke-width:.35;r:1.45}
+.pin.en-hoyo:hover .pin-dot{fill:var(--acc);stroke:#0b1220;r:3}
+.pin.en-hoyo.target .pin-dot{fill:var(--warn);stroke:#0b1220;r:3.6}
+body.hide-pins .pin.en-hoyo .pin-dot{opacity:1}
+/* Sobre la protoboard no se rotulan valores ni polaridades */
+.comp.en-proto .polarity,.comp.en-proto .value{display:none}
+
+/* --------- Protoboard --------- */
+.bb-base{fill:#e4e4e4;stroke:#cdcdcd;stroke-width:1}
+.bb-rail-strip{fill:#e9e9e9}
+.bb-edge{stroke:#d0d0d0;stroke-width:.9}
+.bb-groove{fill:#d9d9d9}
+.bb-rings circle{fill:#cfcfcf;pointer-events:none}
+.bb-hole{fill:#3a3a3a;cursor:crosshair}
+.bb-hole:hover{fill:var(--acc);r:2.6}
+.bb-hole.used{fill:#2a2a2a}
+.bb-hole.hl{fill:#f59e0b;r:2.8}
+.bb-hole.netlit{fill:#22d3ee;r:2.4}
+.bb-rail-line{stroke-width:1}
+.bb-rail-line.pos{stroke:#d0302b}
+.bb-rail-line.neg{stroke:#333}
+.bb-txt{font-family:var(--font);font-size:5px;fill:#6f6f6f;user-select:none;pointer-events:none}
+.bb-sign{font-family:var(--font);font-size:9px;font-weight:700;user-select:none;pointer-events:none}
+.bb-sign.pos{fill:#d0302b}
+.bb-sign.neg{fill:#333}
+.bb-net-path{fill:none;stroke:#22d3ee;stroke-width:2.4;opacity:0;stroke-linecap:round}
+body.show-nets .bb-net-path{opacity:.55;animation:netpulse 1.6s ease-in-out infinite}
+@keyframes netpulse{0%,100%{opacity:.32}50%{opacity:.8}}
+.bb-net-path.rail-pos{stroke:#ef4444}
+.bb-net-path.rail-neg{stroke:#475569}
+
+/* --------- LED --------- */
+.led-glow{opacity:0;transition:opacity .1s}
+.led-halo{opacity:0}
+.led-body{transition:fill .1s}
+.led-on .led-glow{opacity:1}
+
+/* --------- Cables --------- */
+.wire{fill:none;stroke-width:3.1;stroke-linecap:round;cursor:pointer;transition:stroke-width .1s}
+.wire-hit{fill:none;stroke:transparent;stroke-width:12;cursor:pointer}
+.wire.sel{stroke-width:4.4;filter:url(#glowSoft)}
+.wire.hovered{stroke-width:4}
+.wire-end{fill:#cbd5e1;stroke:#0b1220;stroke-width:.6}
+/* extremo metido en un agujero (protoboard o cabezal de una placa): el cable
+   termina en su punta redondeada, sin arandela */
+.wire-end.en-hoyo{display:none}
+/* Animación de conexión al iniciar la simulación (wires.js · animarConexion) */
+.plug-ring{fill:none;stroke-width:1.6;pointer-events:none}
+.plug-spark{pointer-events:none;transform-box:fill-box;transform-origin:center}
+.wire-preview{fill:none;stroke:var(--acc);stroke-width:2.6;stroke-dasharray:6 5;opacity:.9;pointer-events:none;
+  stroke-linecap:round;stroke-linejoin:round}
+/* tiradores para doblar el cable seleccionado */
+.bend{cursor:grab}
+.bend:active{cursor:grabbing}
+.bend .bend-hit{fill:transparent}
+.bend .bend-dot{fill:#fff;stroke:#0ea5b7;stroke-width:1.4}
+.bend:hover .bend-dot{fill:var(--acc);r:4.4}
+.bend .bend-add{fill:none;stroke:var(--acc);stroke-width:1.4;stroke-dasharray:2.2 2}
+.bend.nuevo:hover .bend-add{fill:var(--acc);stroke-dasharray:none}
+.bend.extremo .bend-ext{fill:#fbbf24;stroke:#7c4a03;stroke-width:1.2}
+.bend.extremo:hover .bend-ext{fill:#fde047;r:5.4}
+/* Electrones: el TAMANO del hueco entre puntos indica cuanta corriente pasa
+   y la velocidad, lo rapido que circula. Ambos se fijan desde wires.js. */
+.flow{stroke-dasharray:2.6 15;stroke-linecap:round;fill:none;pointer-events:none;opacity:0}
+body.show-flow .flow.live{opacity:.95;animation:flowmove .7s linear infinite}
+body.show-flow .flow.live.rev{animation-direction:reverse}
+@keyframes flowmove{to{stroke-dashoffset:calc(-1 * var(--paso, 16px))}}
+.wire.err{stroke:#ef4444!important;animation:wireerr .7s ease-in-out infinite}
+@keyframes wireerr{50%{opacity:.35}}
+
+/* --------- Estados / avisos sobre el lienzo --------- */
+.badge-warn,.badge-err{font-family:var(--font);font-size:11px;user-select:none;pointer-events:none}
+.spark{pointer-events:none}
+.comp .warn-ico{font-size:11px;pointer-events:none}
+.comp.fault .body{filter:drop-shadow(0 0 6px #ef4444)}
+
+/* --------- Componente quemado --------- */
+.comp .quemado{filter:saturate(.2)}
+.quemado-txt{fill:#f87171!important}
+.humo circle{fill:#9ca3af;opacity:0;animation:humo 2.6s ease-out 3}
+.humo circle:nth-child(2){animation-delay:.55s}
+.humo circle:nth-child(3){animation-delay:1.1s}
+@keyframes humo{
+  0%{opacity:0;transform:translate(0,0) scale(.35)}
+  18%{opacity:.55}
+  100%{opacity:0;transform:translate(-7px,-30px) scale(2.1)}
+}
+.humo{transform-box:fill-box;transform-origin:center}
+
+/* --------- Motor / servo --------- */
+.rotor{transform-box:fill-box;transform-origin:center}
+.servo-arm{transform-box:fill-box;transform-origin:8% 50%;transition:transform .18s ease-out}
+
+/* --------- Arduino / micro:bit --------- */
+.board-pcb{stroke-width:1;filter:url(#dropShadow)}
+.board-txt{font-family:var(--font);font-size:6px;fill:#e2e8f0;user-select:none;pointer-events:none}
+.board-txt.dark{fill:#0f172a}
+.board-hdr{fill:#0f172a;stroke:#475569;stroke-width:.4}
+.mb-led{fill:#3a0d12;transition:fill .07s}
+.mb-led.on{fill:#ff3b30}
+.mb-btn{fill:#0f172a;stroke:#94a3b8;stroke-width:.8;cursor:pointer}
+.mb-btn:hover{fill:#1e293b}
+.mb-btn.pressed{fill:#22d3ee}
+.push-cap{cursor:pointer}
+.push-cap:hover{filter:brightness(1.15)}
+.push-cap.down{transform:translateY(1.2px)}
+.switch-lever{cursor:pointer;transition:transform .12s}
+.pot-knob{cursor:grab}
+.pot-knob:active{cursor:grabbing}
+
+/* --------- Tarjetas de medición sobre el componente --------- */
+.meas-bubble rect{fill:rgba(11,18,32,.88);stroke:var(--acc);stroke-width:.6;rx:4}
+.meas-bubble text{font-family:var(--mono);font-size:7px;fill:#a5f3fc}
+body.light .meas-bubble rect{fill:rgba(255,255,255,.94)}
+body.light .meas-bubble text{fill:#0f5f6e}
+
+/* --------- Iconos de paleta --------- */
+.pal-item .pi-ico .bb-base{stroke-width:2}
+.pal-item .pi-ico .pin{display:none}
+
+/* ============================================================
+   Accesibilidad: si el sistema pide menos movimiento, se apagan
+   las animaciones decorativas (el circuito sigue funcionando).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important;
+  }
+  body.show-flow .flow.live{animation:none;opacity:.9}
+  .humo{display:none}
+}
+
+/* --------- Región de detección del sensor ultrasónico (js/ui/sonar.js) --------- */
+.sn-region{pointer-events:none}
+/* El cono se tine segun vea o no el objeto: verde suave si lo detecta,
+   rojo suave si la bolita se ha salido del haz. */
+.sn-cono{fill:#22d3ee;fill-opacity:.10;stroke:#22d3ee;stroke-opacity:.35;stroke-width:1}
+.sn-cono.activo{fill-opacity:.16;stroke-opacity:.5}
+.sn-region.dentro .sn-cono{fill:#22c55e;stroke:#16a34a}
+.sn-region.fuera .sn-cono{fill:#ef4444;stroke:#dc2626;fill-opacity:.08;stroke-opacity:.3}
+.sn-linea{stroke:#0e7490;stroke-width:1.2;stroke-dasharray:5 4;opacity:.75;fill:none}
+.sn-region.dentro .sn-linea{stroke:#15803d}
+.sn-region.fuera .sn-linea{stroke:#dc2626;opacity:.6}
+.sn-region.fuera .sn-obj{fill:#94a3b8;stroke:#64748b}
+.sn-region.fuera .sn-halo{fill:#ef4444;opacity:.12}
+.sn-region.fuera .sn-etq{fill:#dc2626}
+.sn-halo{fill:#22d3ee;opacity:.18}
+.sn-obj{fill:#0e9bb4;stroke:#0b7185;stroke-width:1.4;pointer-events:auto;cursor:grab}
+.sn-obj:active{cursor:grabbing}
+.sn-brillo{fill:#fff;opacity:.45;pointer-events:none}
+.sn-etq-caja{fill:var(--panel);stroke:var(--line);stroke-width:1;opacity:.95}
+.sn-etq{font-family:var(--mono);font-size:9.5px;fill:var(--text)}
+
+@media (prefers-reduced-motion:reduce){.sn-halo{opacity:.12}}
